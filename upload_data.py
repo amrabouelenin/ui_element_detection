@@ -1,4 +1,3 @@
-from __future__ import print_function
 import json
 import cv2 as cv
 import numpy as np
@@ -35,8 +34,8 @@ y = []
 for i in range(1000, 11000):
     try:
         
-        img_name = f'./combined/{i}.jpg'
-        json_name = f'./semantic_annotations/{i}.json'
+        img_name = f'../rico_limited/{i}.jpg'
+        json_name = f'../semantic_annotations/{i}.json'
 
         img_exmp = cv.imread(img_name)
         
@@ -62,7 +61,7 @@ for i in range(1000, 11000):
         img_str = img_str.decode("ascii")
         # Construct the URL
         upload_url = "".join([
-            "https://api.roboflow.com/dataset/rico_dataset/upload",
+            "https://api.roboflow.com/dataset/rico_dataset_limited/upload",
             "?api_key=Gzb7gSGZFzYYClG6FEpa",
             "&name=",img_name,
             "&split=train"
@@ -76,12 +75,12 @@ for i in range(1000, 11000):
         img_id = r.json()['id']
         print("Uploading Annotation ....................")
         # upload annotation
-        annotation_filename = f'./combined/{i}.xml'
+        annotation_filename = f'../rico_limited/{i}.xml'
         # Read Annotation as String
         annotation_str = open(annotation_filename, "r").read()
         # Construct the URL
         upload_url = "".join([
-            "https://api.roboflow.com/dataset/rico_dataset/annotate/"+img_id,
+            "https://api.roboflow.com/dataset/rico_dataset_limited/annotate/"+img_id,
             "?api_key=Gzb7gSGZFzYYClG6FEpa",
             "&name=", annotation_filename
         ])

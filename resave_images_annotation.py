@@ -104,18 +104,11 @@ for i in randomrange:
         
         img_name = f'../combined/{i}.jpg'
         json_name = f'../semantic_annotations/{i}.json'
-
-        # json_name = str(i) + '.json'
-        # img_name = str(i) + '.jpg'
         img_exmp = cv.imread(img_name)
-        
-
         height, width, channels = img_exmp.shape
-
         with open(json_name, 'r') as j:
             json_exmp = json.loads(j.read())
             json_exmp = json.dumps(json_exmp)
-
 
         bb_list = find_values('bounds', json_exmp)
         label_list = find_values('componentLabel', json_exmp)
