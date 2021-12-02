@@ -1,0 +1,3 @@
+source_imgs: ../combined
+source_annot: ../semantic_annotations
+destination_annot: ../rico_dataset_batch
