@@ -31,14 +31,14 @@ def find_values(id, json_repr):
 x = []
 y = []
 
-for i in range(1000, 11000):
+for i in range(1,11):
     try:
         
         img_name = f'../rico_limited/{i}.jpg'
         json_name = f'../semantic_annotations/{i}.json'
 
         img_exmp = cv.imread(img_name)
-        
+
         height, width, channels = img_exmp.shape
         with open(json_name, 'r') as j:
             json_exmp = json.loads(j.read())
