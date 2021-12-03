@@ -1,3 +1,5 @@
-source_imgs: ../combined
-source_annot: ../semantic_annotations
-destination_annot: ../rico_dataset_batch
+train: ../dataset/batch_1/train/images
+val: ../dataset/batch_1/valid/images
+
+nc: 11
+names: ['Checkbox', 'Date Picker', 'Image', 'Input', 'List Item', 'Map View', 'Multi-Tab', 'Radio Button', 'Slider', 'Text Button', 'Text']

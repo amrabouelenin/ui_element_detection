@@ -11,6 +11,12 @@ import base64
 import io
 from PIL import Image
 
+import logging
+import time
+
+ts = time.time()
+logging.basicConfig(filename=f"roboflow-upload-{ts}.log")
+
 
 
 start = time.time()
@@ -30,25 +36,12 @@ def find_values(id, json_repr):
 
 x = []
 y = []
-
-for i in range(1,11):
+saved_images = []
+images_error = []
+for i in range(300,310):
     try:
         
-        img_name = f'../rico_limited/{i}.jpg'
-        json_name = f'../semantic_annotations/{i}.json'
-
-        img_exmp = cv.imread(img_name)
-
-        height, width, channels = img_exmp.shape
-        with open(json_name, 'r') as j:
-            json_exmp = json.loads(j.read())
-            json_exmp = json.dumps(json_exmp)
-
-
-        bb_list = find_values('bounds', json_exmp)
-        label_list = find_values('componentLabel', json_exmp)
-
-        #tree.write(f'./combined/{i}.xml')
+        img_name = f'../test_images/{i}.jpg'
 
         # upload image to roboflow
         # Load Image with PIL
@@ -61,11 +54,17 @@ for i in range(1,11):
         img_str = img_str.decode("ascii")
         # Construct the URL
         upload_url = "".join([
-            "https://api.roboflow.com/dataset/rico_dataset_limited/upload",
+            "https://api.roboflow.com/dataset/rico_test/upload",
             "?api_key=Gzb7gSGZFzYYClG6FEpa",
             "&name=",img_name,
             "&split=train"
         ])
+        # upload_url = "".join([
+        #     "https://api.roboflow.com/dataset/rico-dataset-batch-6600--1/upload",
+        #     "?api_key=GVbATw7bRll4z3eTh6GF",
+        #     "&name=",img_name,
+        #     "&split=train"
+        # ])
         # POST to the API
         r = requests.post(upload_url, data=img_str, headers={
             "Content-Type": "application/x-www-form-urlencoded"
@@ -73,17 +72,26 @@ for i in range(1,11):
         # Output result
         print(r.json())
         img_id = r.json()['id']
-        print("Uploading Annotation ....................")
+        logging.warning(f'Uploaded image #{i} with Id {img_id}')
+        logging.warning(f'Uploaded annotation for image #{i} with Id {img_id}')
+        saved_images.append(i)
+       
         # upload annotation
-        annotation_filename = f'../rico_limited/{i}.xml'
+        print("Uploading Annotation ....................")
+        annotation_filename = f'../test_images/{i}.xml'
         # Read Annotation as String
         annotation_str = open(annotation_filename, "r").read()
         # Construct the URL
         upload_url = "".join([
-            "https://api.roboflow.com/dataset/rico_dataset_limited/annotate/"+img_id,
+            "https://api.roboflow.com/dataset/rico_test/annotate/"+img_id,
             "?api_key=Gzb7gSGZFzYYClG6FEpa",
             "&name=", annotation_filename
         ])
+        # upload_url = "".join([
+        #     "https://api.roboflow.com/dataset/rico-dataset-batch-6600--1/annotate/"+img_id,
+        #     "?api_key=GVbATw7bRll4z3eTh6GF",
+        #     "&name=", annotation_filename
+        # ])
         # POST to the API
         r = requests.post(upload_url, data=annotation_str, headers={
             "Content-Type": "text/plain"
@@ -91,40 +99,14 @@ for i in range(1,11):
         # Output result
         print(r.json())
         print(f'Finished uploading image #{i}')
+        logging.warning(f'Finished uploading image #{i}')
 
     except Exception as e:
+        logging.error(f'error saving image/annotation for image {i}')
         print(e)
+        images_error.append(i)
 
-# print(len(x))
-# print(len(y))
-
-# x_np = np.asarray(x, dtype=object)
-# y_np = np.asarray(y, dtype=object)
-
-# # with open('x.pickle', 'wb') as fp:
-# #     pickle.dump(x_np, fp)
-
-# # with open('y.pickle', 'wb') as fp:
-# #     pickle.dump(y_np, fp)
-
-# print('started pickling')
-# for i in range(11):
-#     with open(f'x_{i}.pickle', 'wb') as fp:
-#         pickle.dump(x_np[i*100000:(i+1)*100000], fp)
-
-#     with open(f'y_{i}.pickle', 'wb') as fp:
-#         pickle.dump(y_np[i*100000:(i+1)*100000], fp)
-
-#     print(f'pickling between {i} and {i+1}')
-
-
-# with open('x_11.pickle', 'wb') as fp:
-#     pickle.dump(x_np[1100000:1121198], fp)
-
-# with open('y_11.pickle', 'wb') as fp:
-#     pickle.dump(y_np[1100000:1121198], fp)
-
-
-# end = time.time()
-
-# print(f'The process took {end-start} seconds')
+total_upload = len(saved_images)
+error_upload = len(images_error)
+logging.warning(f'total images uploaded: {total_upload}')
+logging.error(f'total images errors: {error_upload}')

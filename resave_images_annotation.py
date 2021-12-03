@@ -18,6 +18,11 @@ import argparse
 import yaml
 
 from ast import literal_eval
+import logging
+import time
+
+ts = time.time()
+
 
 def find_values(id, json_repr):
     results = []
@@ -33,7 +38,10 @@ def find_values(id, json_repr):
     return results
 
 def write_xml_annotation(filename, label_list, bb_list, source_imgs, destination, copy=False, limit_bounds='no'):
-  
+
+  #setup logging basic configuration for logging to a file
+  logging.basicConfig(filename=f"resaving-images-{ts}.log")
+
   root = ET.Element("annotation")
   ET.SubElement(root, "filename", name="filename").text = f'{filename}.jpg'
   ET.SubElement(root, "path", name="path").text = f'{source_imgs}/{filename}.jpg'
@@ -53,21 +61,26 @@ def write_xml_annotation(filename, label_list, bb_list, source_imgs, destination
       'Image','Icon', 'Map View', 'Video',
       'Checkbox','Date Picker','Input', 'List Item',
       'Multi-Tab', 'Radio Button','On-Off Switch',
-      'Map View', 'Pager Indicator','Text Button','Slider',
-      'Text'
+      'Text Button','Slider','Text'
     ]
 
-  print(limit_bounds)
   k=0
   saved_labels = []
+  relabeld_labels = []
+  ignored_labels = []
+  error_images = []
   for label in label_list:
     if label in selected_classes:
      
       # check for relabled labels
       if label == 'Icon':
         label = 'Image'
+        logging.warning(f'relabel label Icon')
+        relabeld_labels.append(label)
       if label == 'Video':
         label = 'Image'
+        logging.warning(f'relabel label Image')
+        relabeld_labels.append(label)
       
       saved_labels.append(label)
 
@@ -82,22 +95,33 @@ def write_xml_annotation(filename, label_list, bb_list, source_imgs, destination
       ET.SubElement(bndbox, "ymin", name="ymin").text = str(bb_list[k][1])
       ET.SubElement(bndbox, "xmax", name="xmax").text = str(bb_list[k][2])
       ET.SubElement(bndbox, "ymax", name="ymax").text = str(bb_list[k][3])
-      k = k+1
+    else:
+      logging.warning(f'ignored label {label}')
+      ignored_labels.append(label)
+    k = k+1
 
   if saved_labels:
     tree = ET.ElementTree(root)
     tree.write(f'{destination}/{filename}.xml')
-    if copy!='true':
+    if copy=='true':
       copyfile(f'{source_imgs}/{filename}.jpg', f'{destination}/{filename}.jpg')
       print(f'copying {filename} to {destination}')
 
     
     print('saved labels')
-    print(np.unique(saved_labels))
+    saved_labels=np.unique(saved_labels)
+    print(saved_labels)
+    logging.warning(f'Saved Labels {saved_labels}')
+
     saved_labels = []
     print(f'Saved image {filename}.xml')
   else:
     print(f'image is not saved, as there is no label match selected')
+    logging.error(f'image {filename} is not saved, as there is no label match selected')
+    error_images.append(filename)
+  
+  
+
 
 def parse_opt(known=False):
   parser = argparse.ArgumentParser()
@@ -110,6 +134,8 @@ def parse_opt(known=False):
   return opt
   
 def main(opt):
+
+  logging.basicConfig(filename=f"resaving-images-{ts}.log")
 
   # Read data YAML file
   with open(opt.data, 'r') as stream:
@@ -126,6 +152,7 @@ def main(opt):
   # Read limit_bounts in case to activate selected bounds
   imgs_range = literal_eval(opt.range)
   for i in range(imgs_range[0], imgs_range[1]):
+    logging.warning(f'processing # {i}')
     print(f'processing # {i} ...........................................................')
     print('                                                                             ')
     try:
@@ -143,10 +170,11 @@ def main(opt):
 
         ## Write annotation in XML file format
         write_xml_annotation(i,label_list,bb_list, source_imgs, destination_annot, opt.copy, opt.limit_bounds)
-
+        logging.warning(f'detected labels # {label_list}')
         print("detected labels")
         print(np.unique(label_list))
     except Exception as e:
+        logging.error(f'Error with image# {i}')
         print(e)
 
 if __name__ == "__main__":
